@@ -20,6 +20,9 @@ public class QueueDto {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime appliedDate;
+    private LocalDateTime appliedDate = LocalDateTime.now();
 
+    public LocalDateTime getAppliedDate() {
+        return LocalDateTime.now();
+    }
 }

@@ -20,6 +20,7 @@ import uz.oliymahad.userservice.model.enums.Status;
 import uz.oliymahad.userservice.repository.CourseRepository;
 import uz.oliymahad.userservice.repository.GroupRepository;
 import uz.oliymahad.userservice.repository.GroupUsersRepository;
+import uz.oliymahad.userservice.repository.QueueRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,8 @@ public class GroupService {
 
     private final QueueService queueService;
 
+    private final QueueRepository queueRepository;
+
     private final GroupUsersRepository groupUsersRepository;
 
     private final ModelMapper modelMapper;
@@ -45,7 +48,7 @@ public class GroupService {
         Optional<CourseEntity> courseEntity = courseRepository.findById(groupRequestDto.getCourseId());
 
         if (courseEntity.isEmpty()) {
-            return new RestAPIResponse("course not found", true,404);
+            return new RestAPIResponse("course not found", true, 404);
         }
 
         GroupEntity groupEntity = new GroupEntity();
@@ -57,35 +60,46 @@ public class GroupService {
         groupEntity.setCourse(courseEntity.get());
 
         GroupEntity groupEntityDB = groupRepository.save(groupEntity);
-
+//
         FilterQueueForGroupsDTO filterQueueDTO = new FilterQueueForGroupsDTO();
-        filterQueueDTO.setCourseId(groupRequestDto.getCourseId());
-        filterQueueDTO.setGender(groupRequestDto.getType());
-        filterQueueDTO.setLimit(groupRequestDto.getMembersCount());
+//        filterQueueDTO.setCourseId(groupRequestDto.getCourseId());
+//        filterQueueDTO.setGender(groupRequestDto.getType());
+//        filterQueueDTO.setLimit(groupRequestDto.getMembersCount());
         filterQueueDTO.setStatus(Status.ACCEPT.toString());
-        RestAPIResponse usersByFilter = queueService.getUsersByFilter(filterQueueDTO);
-
-        List<GroupUsersEntity> groupUsers = new ArrayList<>();
-        for (long userId : (List<Long>)usersByFilter.getData()) {
-            GroupUsersEntity groupUser = new GroupUsersEntity();
-//            groupUser.setUserId(userId);
-            groupUser.setGroup(groupEntityDB);
-            GroupUsersEntity groupUserDB = groupUsersRepository.save(groupUser);
-            groupUsers.add(groupUserDB);
-        }
-
-        groupEntityDB.setGroupUsers(groupUsers);
-        groupRepository.save(groupEntityDB);
-
-
-        groupRepository.save(groupEntity);
-
-        return new RestAPIResponse("group added \n", true,200);
+//        RestAPIResponse usersByFilter = queueService.getUsersByFilter(filterQueueDTO);
+//
+//        List<GroupUsersEntity> groupUsers = new ArrayList<>();
+//        for (long userId : (List<Long>)usersByFilter.getData()) {
+//            GroupUsersEntity groupUser = new GroupUsersEntity();
+////            groupUser.setUserId(userId);
+//            groupUser.setGroup(groupEntityDB);
+//            GroupUsersEntity groupUserDB = groupUsersRepository.save(groupUser);
+//            groupUsers.add(groupUserDB);
+//        }
+//
+//        groupEntityDB.setGroupUsers(groupUsers);
+//        groupRepository.save(groupEntityDB);
+//
+//
+//        groupRepository.save(groupEntity);
+//
+        return new RestAPIResponse("group added \n", true, 200);
     }
 
-    public RestAPIResponse getAllGroups(){
+    private boolean addMembersToGroup(final long courseId,
+                                      final String gender,
+                                      final String status,
+                                      final int length
+    ) {
+        queueRepository.filterByCourseStatusGenderLimitForGroups(
+                courseId, status,gender, length
+        );
+        return true;
+    }
+
+    public RestAPIResponse getAllGroups() {
         List<GroupEntity> allGroup = groupRepository.findAll();
-        return new RestAPIResponse("All Groups", true,200, allGroup) ;
+        return new RestAPIResponse("All Groups", true, 200, allGroup);
     }
 
     public Page<GroupEntity> getGroupPage(int pageNumber) {
@@ -100,26 +114,26 @@ public class GroupService {
         return groupPage;
     }
 
-    public  RestAPIResponse getGroups(Pageable page) {
-        Page<GroupEntity> groupEntities = groupRepository.findAll(page);
-        List<GroupSectionDto> list = groupEntities.getContent().size() > 0 ?
+    public RestAPIResponse getGroups(final Pageable page) {
+        final Page<GroupEntity> groupEntities = groupRepository.findAll(page);
+        final List<GroupSectionDto> list = groupEntities.getContent().size() > 0 ?
                 groupEntities.getContent().stream().map(u -> modelMapper.map(u, GroupSectionDto.class)).toList() :
                 new ArrayList<>();
         PageImpl<GroupSectionDto> groupResponseDtos = new PageImpl<>(list, groupEntities.getPageable(), groupEntities.getTotalPages());
-        return new RestAPIResponse("Group List",true,200,groupResponseDtos);
+        return new RestAPIResponse("Group List", true, 200, groupResponseDtos);
     }
 
-    public RestAPIResponse getGroupById(Long id){
+    public RestAPIResponse getGroupById(Long id) {
         Optional<GroupEntity> groupEntity = groupRepository.findById(id);
-        return new RestAPIResponse("One Group", true,200, groupEntity) ;
+        return new RestAPIResponse("One Group", true, 200, groupEntity);
     }
 
-    public RestAPIResponse deleteGroupById(Long id){
+    public RestAPIResponse deleteGroupById(Long id) {
         groupRepository.deleteById(id);
-        return new RestAPIResponse("group deleted", true,200) ;
+        return new RestAPIResponse("group deleted", true, 200);
     }
 
-    public RestAPIResponse editGroupInfo(GroupRequestDto newGroup, Long id){
+    public RestAPIResponse editGroupInfo(GroupRequestDto newGroup, Long id) {
         GroupEntity oldGroup = groupRepository.getById(id);
         if (!newGroup.getName().isBlank()) oldGroup.setName(newGroup.getName());
         if (newGroup.getMembersCount() != 0) oldGroup.setMembersCount(newGroup.getMembersCount());
@@ -129,8 +143,8 @@ public class GroupService {
             Optional<CourseEntity> courseEntity = courseRepository.findById(newGroup.getCourseId());
             oldGroup.setCourse(courseEntity.get());
         }
-        groupRepository.save(oldGroup) ;
-        return new RestAPIResponse("group updated", true,200);
+        groupRepository.save(oldGroup);
+        return new RestAPIResponse("group updated", true, 200);
     }
 
 }

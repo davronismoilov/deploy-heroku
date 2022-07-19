@@ -16,6 +16,7 @@ import uz.oliymahad.userservice.model.entity.queue.QueueEntity;
 import uz.oliymahad.userservice.model.enums.Status;
 import uz.oliymahad.userservice.repository.CourseRepository;
 import uz.oliymahad.userservice.repository.QueueRepository;
+import uz.oliymahad.userservice.repository.UserRepository;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -32,6 +33,7 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
     private final QueueRepository queueRepository;
     private final CourseRepository courseRepository;
     private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
     private final UserService userService;
 
     @Override
@@ -44,9 +46,10 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
         if (optionalCourse.isEmpty()) {
             return new RestAPIResponse(COURSE + NOT_FOUND, false, 404);
         }
-        QueueEntity queueEntity = modelMapper.map(queueDto, QueueEntity.class);
+        QueueEntity queueEntity = new QueueEntity();
         queueEntity.setCourse(optionalCourse.get());
         queueEntity.setStatus(Status.PENDING);
+        queueEntity.setUser(userRepository.findById(queueDto.getUserId()).orElseThrow());
         queueRepository.save(queueEntity);
         return new RestAPIResponse(SUCCESSFULLY_SAVED, true, 200);
     }
@@ -96,10 +99,6 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
         return new RestAPIResponse(SUCCESS, true, 200, userCourseQueue);
     }
 
-    public RestAPIResponse getUsersByFilter(FilterQueueForGroupsDTO filterQueueDTO) {
-        List<Long> users = queueRepository.filterByCourseStatusGenderLimitForGroups(filterQueueDTO.getCourseId(), filterQueueDTO.getStatus(), filterQueueDTO.getGender(), filterQueueDTO.getLimit());
-        return new RestAPIResponse(SUCCESS, true, 200, users);
-    }
 
 
     public RestAPIResponse getQueueByFilter(Long userId, String gender, String status, Long courseId, String appliedDate) {
