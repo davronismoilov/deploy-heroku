@@ -1,13 +1,11 @@
 package uz.oliymahad.userservice.service;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import uz.oliymahad.userservice.dto.request.FilterQueueForGroupsDTO;
 import uz.oliymahad.userservice.dto.request.QueueDto;
 import uz.oliymahad.userservice.dto.response.*;
 import uz.oliymahad.userservice.model.entity.UserEntity;
@@ -24,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,10 +35,6 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
 
     @Override
     public RestAPIResponse add(QueueDto queueDto) {
-//        boolean exist = userFeign.isExist(queueDto.getUserId());
-//        if (!exist) {
-//            return new ApiResponse<>(USER + NOT_FOUND,false);
-//        }
         Optional<CourseEntity> optionalCourse = courseRepository.findById(queueDto.getCourseId());
         if (optionalCourse.isEmpty()) {
             return new RestAPIResponse(COURSE + NOT_FOUND, false, 404);
@@ -57,7 +50,6 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
     @Override
     public RestAPIResponse getList(Pageable page) {
         return new RestAPIResponse(DATA_LIST, true, 200, queueRepository.findAll(page));
-
     }
 
     @Override
@@ -94,13 +86,6 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
         return new RestAPIResponse(SUCCESSFULLY_UPDATED, true, 200);
     }
 
-    public RestAPIResponse getUserCourseQueue(Long userId, Long courseId) {
-        List<Long> userCourseQueue = queueRepository.getUserCourseQueue(userId, courseId);
-        return new RestAPIResponse(SUCCESS, true, 200, userCourseQueue);
-    }
-
-
-
     public RestAPIResponse getQueueByFilter(Long userId, String gender, String status, Long courseId, String appliedDate) {
         String appliedDateAfter = null;
         if (appliedDate != null) {
@@ -111,6 +96,37 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
 
     }
 
+    public RestAPIResponse changeQueueStatus (long id, QueueDto queueDto) {
+        Optional<QueueEntity> optionalQueue = queueRepository.findById(id);
+        if (optionalQueue.isEmpty()) {
+            return new RestAPIResponse(QUEUE + NOT_FOUND,false,404);
+        }
+        QueueEntity queue = optionalQueue.get();
+        queue.setStatus(Status.valueOf(queueDto.getStatus()));
+        queueRepository.save(queue);
+        return new RestAPIResponse(SUCCESSFULLY_UPDATED,true,200);
+    }
+
+    public RestAPIResponse getUserDetails (long queueId) {
+        Optional<QueueEntity> optionalQueue = queueRepository.findById(queueId);
+        if (optionalQueue.isEmpty()) {
+            return new RestAPIResponse(QUEUE + NOT_FOUND,false,404);
+        }
+        return new RestAPIResponse(USER,true,200,optionalQueue.get().getUser().getUserRegisterDetails());
+    }
+
+    public List<UserEntity> getUsers (long courseId, String status, int limit, String gender) {
+        List<QueueEntity> queueEntities = queueRepository.filterByCourseStatusGenderLimitForGroups(courseId,status,gender,limit);
+        List<UserEntity> users = new ArrayList<>();
+        for (QueueEntity queue : queueEntities) {
+            if (queue.getStatus().equals(Status.PENDING)) {
+                users.add(queue.getUser());
+                queue.setStatus(Status.INACTIVE);
+                queueRepository.save(queue);
+            }
+        }
+        return users;
+    }
 
     private String getDayAfterDay(String day) {
         String sDay = day.substring(0, 10);
@@ -145,7 +161,7 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
                     cont.getStatus()
                     ));
         });
-        response.setContent(list);
+//        response.setContent(list);
         return new RestAPIResponse(HttpStatus.OK.name(), true, 200,response);
     }
 

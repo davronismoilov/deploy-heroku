@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import uz.oliymahad.userservice.audit.Auditable;
+import uz.oliymahad.userservice.model.entity.UserEntity;
 import uz.oliymahad.userservice.model.entity.course.CourseEntity;
 import uz.oliymahad.userservice.model.entity.queue.QueueEntity;
 import uz.oliymahad.userservice.model.enums.EGender;
@@ -29,10 +30,7 @@ import java.util.List;
 
     private String name;
 
-    private Long membersCount ;
-
-    @Enumerated
-    private EGender type ;
+    private int membersCount ;
 
     @Enumerated
     private GroupStatusEnum groupStatus ;
@@ -42,8 +40,8 @@ import java.util.List;
     @ManyToOne
     private CourseEntity course ;
 
-    @OneToMany(mappedBy = "group")
-    private List<GroupUsersEntity> groupUsers;
+    @OneToMany()
+    private List<UserEntity> userEntities;
 
     @OneToMany
     private List<QueueEntity> queueEntities;
