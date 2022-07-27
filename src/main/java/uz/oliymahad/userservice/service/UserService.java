@@ -35,6 +35,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -113,7 +114,7 @@ public class UserService implements Response {
     public RestAPIResponse getUsers (Pageable pageable) {
         Page<UserEntity> userEntities = userRepository.findAll(pageable);
         List<UserSectionDto> list = userEntities.getContent().size() > 0 ?
-                userEntities.getContent().stream().map(u -> modelMapper.map(u, UserSectionDto.class)).toList() :
+                userEntities.getContent().stream().map(u -> modelMapper.map(u, UserSectionDto.class)).collect(Collectors.toList()) :
                 new ArrayList<>();
        Page<UserSectionDto> userSectionDtos =new PageImpl<>(list,pageable,userEntities.getTotalElements());
 

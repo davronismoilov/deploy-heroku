@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -152,7 +153,7 @@ public class QueueService implements BaseService<QueueDto, Long, QueueEntity, Pa
         Page<QueueEntity> queueEntities = queueRepository.findAllByStatus("PENDING",pageable);
         List<QueueResponse> list = queueEntities.getContent().size() > 0 ?
                 queueEntities.getContent().stream().map(u ->
-                        modelMapper.map(u, QueueResponse.class)).toList() :
+                        modelMapper.map(u, QueueResponse.class)).collect(Collectors.toList()) :
                 new ArrayList<>();
         for (QueueResponse queueResponse : list) {
             for (QueueEntity queueEntity : queueEntities) {

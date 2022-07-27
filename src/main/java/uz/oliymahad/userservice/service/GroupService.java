@@ -23,6 +23,7 @@ import uz.oliymahad.userservice.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,7 +70,7 @@ public class GroupService implements Response {
     public RestAPIResponse getGroups(Pageable page) {
         Page<GroupEntity> groupEntities = groupRepository.findAll(page);
         List<GroupSectionDto> list = groupEntities.getContent().size() > 0 ?
-                groupEntities.getContent().stream().map(u -> modelMapper.map(u, GroupSectionDto.class)).toList() :
+                groupEntities.getContent().stream().map(u -> modelMapper.map(u, GroupSectionDto.class)).collect(Collectors.toList()) :
                 new ArrayList<>();
         for (GroupSectionDto groupSectionDto : list) {
             Optional<CourseEntity> optionalCourse = courseRepository.findById(groupSectionDto.getCourseId());

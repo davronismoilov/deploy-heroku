@@ -17,6 +17,7 @@ import uz.oliymahad.userservice.repository.CourseRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -40,7 +41,7 @@ public class CourseService implements BaseService<CourseDto,Long, CourseEntity, 
     public RestAPIResponse getList(Pageable pageable) {
         Page<CourseEntity> courseEntities = courseRepository.findAll(pageable);
         List<CourseSectionDto> list = courseEntities.getContent().size() > 0 ?
-                courseEntities.getContent().stream().map(u -> modelMapper.map(u, CourseSectionDto.class)).toList() :
+                courseEntities.getContent().stream().map(u -> modelMapper.map(u, CourseSectionDto.class)).collect(Collectors.toList()) :
                 new ArrayList<>();
         PageImpl<CourseSectionDto> courseSectionDtos = new PageImpl<>(list, courseEntities.getPageable(), courseEntities.getTotalElements());
         return new RestAPIResponse(COURSE + DATA_LIST,true,200,courseSectionDtos);
