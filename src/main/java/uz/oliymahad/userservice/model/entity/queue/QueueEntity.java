@@ -45,7 +45,4 @@ public class QueueEntity extends Auditable<String> {
 
     @ManyToOne(fetch = FetchType.EAGER)
     private CourseEntity course;
-
-
-
 }
