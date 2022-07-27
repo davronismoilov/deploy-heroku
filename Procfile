@@ -1,1 +1,1 @@
-web: java  -jar target/user-serve.jar
+web: java  -jar target/user-server.jar
